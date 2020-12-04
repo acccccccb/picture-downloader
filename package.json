@@ -1,0 +1,82 @@
+{
+  "name": "picture-downloader",
+  "version": "0.0.1",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "vue-cli-service serve",
+    "serve": "vue-cli-service serve",
+    "start": "electron . & vue-cli-service serve",
+    "devServ": "node serve/serve.js",
+    "pack": "node pack.config.js --unhandled-rejections=strict",
+    "build": "vue-cli-service build",
+    "rebuild": "electron-rebuild",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "font-awesome": "^4.7.0",
+    "element-ui": "^2.13.2",
+    "iconv-lite": "^0.6.2",
+    "os": "^0.1.1",
+    "address": "^1.1.2",
+    "core-js": "^3.6.5",
+    "axios": "^0.19.2",
+    "node-fetch": "^2.6.0",
+    "vue": "^2.6.11",
+    "fs": "0.0.1-security",
+    "fs-extra": "^9.0.1",
+    "http": "^0.0.1-security",
+    "buffer": "^5.6.0",
+    "request": "^2.88.2",
+    "image-size": "^0.8.3"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.14.0",
+    "@vue/cli-plugin-babel": "~4.4.0",
+    "@vue/cli-plugin-eslint": "~4.4.0",
+    "@vue/cli-service": "~4.4.0",
+    "address": "^1.1.2",
+    "axios": "^0.19.2",
+    "babel-eslint": "^10.1.0",
+    "buffer": "^5.6.0",
+    "css-loader": "^4.0.0",
+    "electron": "^9.3.1",
+    "electron-packager": "^15.0.0",
+    "electron-rebuild": "^1.11.0",
+    "element-ui": "^2.13.2",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^6.2.2",
+    "font-awesome": "^4.7.0",
+    "fs": "0.0.1-security",
+    "fs-extra": "^9.0.1",
+    "http": "^0.0.1-security",
+    "iconv-lite": "^0.6.2",
+    "image-size": "^0.8.3",
+    "node-fetch": "^2.6.0",
+    "node-sass": "^4.14.1",
+    "os": "^0.1.1",
+    "request": "^2.88.2",
+    "sass-loader": "^9.0.2",
+    "style-loader": "^1.2.1",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
