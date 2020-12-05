@@ -14,7 +14,7 @@
 
 ![screenshot](https://www.ihtmlcss.com/wp-content/uploads/2020/12/image-3.png)
 
-![screenshot](https://www.ihtmlcss.com/wp-content/uploads/2020/12/image-4.png)
+![screenshot](https://www.ihtmlcss.com/wp-content/uploads/2020/12/image-4-1.png)
 
 ## 安装
 ```
