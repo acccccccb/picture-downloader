@@ -1,24 +1,33 @@
-# electron-vue-base
+# picture-downloader
 
-## Project setup
+图片下载器
+
+- 设置图片下载规则自动完成下载
+- 下载规则可生成文件，便于分享
+- 使用nodejs + vue开发
+
+预览
+
+![screenshot](screenshot/image-1.png)
+
+![screenshot](screenshot/image-2.png)
+
+![screenshot](screenshot/image-3.png)
+
+![screenshot](screenshot/image-4.png)
+
+## 安装
 ```
-npm install
+npm i
 ```
 
-### Compiles and hot-reloads for development
+### 开发
 ```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
+npm run dev
+npm run start
 ```
 
-### Lints and fixes files
+### 打包成EXE文件 放在 ./pack 目录下
 ```
-npm run lint
+npm run pack
 ```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).

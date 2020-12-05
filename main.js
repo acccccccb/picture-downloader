@@ -52,7 +52,7 @@ let creatTray = function(){
             }
         },
     ]);
-    tray.setToolTip('鼠标放在托盘上显示的文字');
+    tray.setToolTip('Picture-downloader');
     tray.setContextMenu(contextMenu);
     // 托盘单击事件
     tray.on('balloon-click',function(){

@@ -14,6 +14,9 @@
           <el-tab-pane label="图片下载器">
             <Spider></Spider>
           </el-tab-pane>
+            <el-tab-pane label="关于">
+                <About></About>
+            </el-tab-pane>
         </el-tabs>
       </el-col>
     </el-row>
@@ -23,10 +26,12 @@
 <script>
   let config = require('../../package.json');
   import Spider from './Index/Spider'
+  import About from './About/About'
     export default {
       name: 'Index',
         components:{
             Spider,
+            About,
         },
         data(){
           return {

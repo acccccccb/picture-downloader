@@ -1,269 +1,271 @@
 <template>
     <div class="spiderBox fixScrollY">
-        <el-form :model="form" size="mini" label-position="right" label-width="120px">
-            <el-form-item label="规则名称：">
-                <el-input placeholder="规则名称" type="text" v-model="form.ruleName"></el-input>
-            </el-form-item>
-            <el-form-item label="">
-                <el-button @click="loadRuleFile" type="warning">载入规则</el-button>
-                <el-button @click="saveRuleFile" :disabled="!form.ruleName" type="danger">保存规则</el-button>
-                <el-button style="float:right;" @click="runRuleFile" :disabled="!form.ruleName" type="primary">执行规则</el-button>
-            </el-form-item>
-            <el-collapse accordion>
-                <el-collapse-item title="第一步：" :disabled="!form.ruleName">
-                    <template slot="title">
-                        <el-tag type="info" v-if="!form.ruleName" effect="dark"><i class="el-icon-remove"></i> 第一步</el-tag>
-                        <el-tag type="warning" v-if="form.ruleName && urlList.length===0" effect="dark"><i class="el-icon-warning"></i> 第一步
-                        </el-tag>
-                        <el-tag type="success" v-if="form.ruleName && urlList.length>0" effect="dark"><i class="el-icon-success"></i> 第一步
-                        </el-tag>
-                    </template>
-                    <el-form-item label="网址：">
-                        <el-input :readonly="loading" placeholder="请输入网址" v-model="form.url" class="input-with-select">
-                            <el-select style="width:80px;" v-model="form.method" slot="prepend" placeholder="请选择">
-                                <el-option label="GET" value="GET"></el-option>
-                                <el-option label="POST" value="POST"></el-option>
-                            </el-select>
-                        </el-input>
+        <el-row>
+            <el-col :span="24">
+                <el-form :model="form" size="mini" label-position="left" label-width="120px">
+                    <el-form-item label="规则名称：">
+                        <el-input placeholder="规则名称" type="text" v-model="form.ruleName"></el-input>
                     </el-form-item>
-                    <el-row :gutter="20">
-                        <el-col :span="8">
-                            <el-form-item label="端口：">
-                                <el-input-number
-                                        :precision="0"
-                                        :min="1"
-                                        :step="1"
-                                        :step-strictly="true"
-                                        :max="65535"
-                                        :controls="false"
-                                        :readonly="loading"
-                                        v-model.number="form.port"
-                                        placeholder="80"
-                                ></el-input-number>
+                    <el-form-item label="">
+                        <el-button @click="loadRuleFile" type="warning">载入规则</el-button>
+                        <el-button @click="saveRuleFile" :disabled="!form.ruleName" type="danger">保存规则</el-button>
+                        <el-button style="float:right;" @click="runRuleFile" :disabled="!form.ruleName" type="primary">执行规则</el-button>
+                    </el-form-item>
+                    <el-collapse accordion>
+                        <el-collapse-item title="第一步：" :disabled="!form.ruleName">
+                            <template slot="title">
+                                <el-tag type="info" v-if="!form.ruleName" effect="dark"><i class="el-icon-remove"></i> 第一步</el-tag>
+                                <el-tag type="warning" v-if="form.ruleName && urlList.length===0" effect="dark"><i class="el-icon-warning"></i> 第一步
+                                </el-tag>
+                                <el-tag type="success" v-if="form.ruleName && urlList.length>0" effect="dark"><i class="el-icon-success"></i> 第一步
+                                </el-tag>
+                            </template>
+                            <el-form-item label="网址：">
+                                <el-input :readonly="loading" placeholder="请输入网址" v-model="form.url" class="input-with-select">
+                                    <el-select style="width:80px;" v-model="form.method" slot="prepend" placeholder="请选择">
+                                        <el-option label="GET" value="GET"></el-option>
+                                        <el-option label="POST" value="POST"></el-option>
+                                    </el-select>
+                                </el-input>
                             </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="超时时间(毫秒)：">
-                                <el-input :readonly="loading" v-model.number="form.timeout" placeholder="如果图片下载不完整请将此数值调大"></el-input>
+                            <el-row :gutter="20">
+                                <el-col :span="12">
+                                    <el-form-item label="端口：">
+                                        <el-input-number
+                                                :precision="0"
+                                                :min="1"
+                                                :step="1"
+                                                :step-strictly="true"
+                                                :max="65535"
+                                                :controls="false"
+                                                :readonly="loading"
+                                                v-model.number="form.port"
+                                                placeholder="80"
+                                        ></el-input-number>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="页面编码：">
+                                        <el-select :disabled="loading" v-model.number="form.encoding" allow-create filterable placeholder="页面编码">
+                                            <el-option label="gb2312" value="gb2312"></el-option>
+                                            <el-option label="utf8" value="utf8"></el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="24">
+                                    <el-form-item label="分片数据等待时间(毫秒)：" label-width="180px">
+                                        <el-input :readonly="loading" v-model.number="form.timeout" placeholder="如果图片下载不完整请将此数值调大"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            <el-form-item label="列表HTML：">
+                                <el-input readonly v-model="listResult" type="textarea" placeholder="获取列表HTML"></el-input>
                             </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-form-item label="页面编码：">
-                                <el-select :disabled="loading" v-model.number="form.encoding" allow-create filterable placeholder="页面编码">
-                                    <el-option label="gb2312" value="gb2312"></el-option>
-                                    <el-option label="utf8" value="utf8"></el-option>
-                                </el-select>
+                            <el-row :gutter="20">
+                                <el-col :span="12">
+                                    <el-form-item label="列表开始代码：">
+                                        <el-input :readonly="loading" v-model.number="form.listStart" placeholder="列表区域开始代码"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="列表结束代码：">
+                                        <el-input :readonly="loading" v-model.number="form.listEnd" placeholder="列表区域结束代码"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            <el-row :gutter="20">
+                                <el-col :span="12">
+                                    <el-form-item label="链接开始代码：">
+                                        <el-input :readonly="loading" v-model.number="form.urlStart" placeholder="链接开始代码"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="链接结束代码：">
+                                        <el-input :readonly="loading" v-model.number="form.urlEnd" placeholder="链接结束代码"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="通配符开始：">
+                                        <el-input-number
+                                                :precision="0"
+                                                :min="1"
+                                                :step="1"
+                                                :step-strictly="true"
+                                                :max="65535"
+                                                :controls="true"
+                                                :readonly="loading"
+                                                v-model.number="form.wildcardStart"
+                                                placeholder="通配符开始"
+                                        ></el-input-number>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="通配符结束：">
+                                        <el-input-number
+                                                :precision="0"
+                                                :min="1"
+                                                :step="1"
+                                                :step-strictly="true"
+                                                :max="65535"
+                                                :controls="true"
+                                                :readonly="loading"
+                                                v-model.number="form.wildcardEnd"
+                                                placeholder="通配符结束"
+                                        ></el-input-number>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            <el-form-item>
+                                <el-button :disabled="loading" type="danger" @click="getList">获取列表</el-button>
+                                <el-button v-if="loading" type="info" @click="cancel">取消</el-button>
                             </el-form-item>
-                        </el-col>
-                    </el-row>
-                    <el-form-item label="列表HTML：">
-                        <el-input readonly v-model="listResult" type="textarea" placeholder="获取列表HTML"></el-input>
-                    </el-form-item>
-                    <el-row :gutter="20">
-                        <el-col :span="12">
-                            <el-form-item label="列表开始代码：">
-                                <el-input :readonly="loading" v-model.number="form.listStart" placeholder="列表区域开始代码"></el-input>
+                            <el-form-item label="列表URL：">
+                                <el-table
+                                        height="250"
+                                        size="mini"
+                                        border
+                                        :data="urlList"
+                                        v-loading="loading"
+                                        :element-loading-text="getListLoadingText"
+                                >
+                                    <el-table-column type="index" label="#" align="center"></el-table-column>
+                                    <el-table-column prop="url" label="列表URL">
+                                        <template slot-scope="scope">
+                                            <el-button type="text" style="padding:0;" @click="openUrl(scope.row.url)">{{scope.row.url}}</el-button>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
                             </el-form-item>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-form-item label="列表结束代码：">
-                                <el-input :readonly="loading" v-model.number="form.listEnd" placeholder="列表区域结束代码"></el-input>
+                        </el-collapse-item>
+                        <el-collapse-item title="第二步：" :disabled="urlList.length===0">
+                            <template slot="title">
+                                <el-tag type="info" v-if="urlList.length===0" effect="dark"><i class="el-icon-remove"></i> 第二步</el-tag>
+                                <el-tag type="warning" v-if="urlList.length > 0 && tempImgList.length===0" effect="dark">
+                                    <i class="el-icon-warning"></i> 第二步
+                                </el-tag>
+                                <el-tag type="success" v-if="tempImgList.length>0" effect="dark"><i class="el-icon-success"></i> 第二步</el-tag>
+                            </template>
+                            <el-form-item label="图片页HTML：">
+                                <el-input readonly v-model="imgSrcResult" type="textarea" placeholder="图片页HTML"></el-input>
                             </el-form-item>
-                        </el-col>
-                    </el-row>
-                    <el-row :gutter="20">
-                        <el-col :span="12">
-                            <el-form-item label="链接开始代码：">
-                                <el-input :readonly="loading" v-model.number="form.urlStart" placeholder="链接开始代码"></el-input>
+                            <el-form-item label="图片链接前缀：">
+                                <el-input :readonly="loading" v-model.number="form.imgServ" placeholder="图片地址前缀"></el-input>
                             </el-form-item>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-form-item label="链接结束代码：">
-                                <el-input :readonly="loading" v-model.number="form.urlEnd" placeholder="链接结束代码"></el-input>
+                            <el-row :gutter="20">
+                                <el-col :span="12">
+                                    <el-form-item label="图片开始代码：">
+                                        <el-input :readonly="loading" v-model.number="form.imgSrcStart" placeholder="列表开始代码"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-form-item label="图片结束代码：">
+                                        <el-input :readonly="loading" v-model.number="form.imgSrcEnd" placeholder="列表结束代码"></el-input>
+                                    </el-form-item>
+                                </el-col>
+                            </el-row>
+                            <el-form-item>
+                                <el-button type="danger" :disabled="getImgListLoading" @click="getImgList(urlList)">获取图片地址</el-button>
+                                <el-button v-if="getImgListLoading" type="info" @click="cancel">取消</el-button>
                             </el-form-item>
-                        </el-col>
-                        <el-row :gutter="20">
-                            <el-col :span="12">
-                                <el-form-item label="通配符开始：">
-                                    <el-input-number
-                                            :precision="0"
-                                            :min="1"
-                                            :step="1"
-                                            :step-strictly="true"
-                                            :max="65535"
-                                            :controls="true"
-                                            :readonly="loading"
-                                            v-model.number="form.wildcardStart"
-                                            placeholder="通配符开始"
-                                    ></el-input-number>
-                                </el-form-item>
-                            </el-col>
-                            <el-col :span="12">
-                                <el-form-item label="通配符结束：">
-                                    <el-input-number
-                                            :precision="0"
-                                            :min="1"
-                                            :step="1"
-                                            :step-strictly="true"
-                                            :max="65535"
-                                            :controls="true"
-                                            :readonly="loading"
-                                            v-model.number="form.wildcardEnd"
-                                            placeholder="通配符结束"
-                                    ></el-input-number>
-                                </el-form-item>
-                            </el-col>
-                        </el-row>
-                    </el-row>
-                    <el-form-item>
-                        <el-button :disabled="loading" type="danger" @click="getList">获取列表</el-button>
-                        <el-button v-if="loading" type="info" @click="cancel">取消</el-button>
-                    </el-form-item>
-                    <el-form-item label="列表URL：">
-                        <el-table
-                                height="250"
-                                size="mini"
-                                border
-                                :data="urlList"
-                                v-loading="loading"
-                                :element-loading-text="getListLoadingText"
-                        >
-                            <el-table-column type="index" label="#" align="center"></el-table-column>
-                            <el-table-column prop="url" label="列表URL">
-                                <template slot-scope="scope">
-                                    <el-button type="text" style="padding:0;" @click="openUrl(scope.row.url)">{{scope.row.url}}</el-button>
-                                </template>
-                            </el-table-column>
-                        </el-table>
-                    </el-form-item>
-                </el-collapse-item>
-                <el-collapse-item title="第二步：" :disabled="urlList.length===0">
-                    <template slot="title">
-                        <el-tag type="info" v-if="urlList.length===0" effect="dark"><i class="el-icon-remove"></i> 第二步</el-tag>
-                        <el-tag type="warning" v-if="urlList.length > 0 && tempImgList.length===0" effect="dark">
-                            <i class="el-icon-warning"></i> 第二步
-                        </el-tag>
-                        <el-tag type="success" v-if="tempImgList.length>0" effect="dark"><i class="el-icon-success"></i> 第二步</el-tag>
-                    </template>
-                    <el-form-item label="图片页HTML：">
-                        <el-input readonly v-model="imgSrcResult" type="textarea" placeholder="图片页HTML"></el-input>
-                    </el-form-item>
-                    <el-form-item label="图片链接前缀：">
-                        <el-input :readonly="loading" v-model.number="form.imgServ" placeholder="图片地址前缀"></el-input>
-                    </el-form-item>
-                    <el-row :gutter="20">
-                        <el-col :span="12">
-                            <el-form-item label="图片开始代码：">
-                                <el-input :readonly="loading" v-model.number="form.imgSrcStart" placeholder="列表开始代码"></el-input>
+                            <el-form-item label="待下载图片：">
+                                <el-table
+                                        height="250"
+                                        size="mini"
+                                        border
+                                        :data="tempImgList"
+                                        v-loading="getImgListLoading"
+                                        :element-loading-text="getImgListLoadingText"
+                                >
+                                    <el-table-column type="index" label="#" align="center"></el-table-column>
+                                    <el-table-column prop="src" label="图片地址">
+                                        <template slot-scope="scope">
+                                            <el-button type="text" style="padding:0;" @click="openUrl(scope.row.src)">{{scope.row.src}}</el-button>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="isDownload" align="center" width="85" label="状态">
+                                        <template slot-scope="scope">
+                                            <el-tag size="mini" effect="dark" v-if="scope.row.isDownload===1" type="info">未下载</el-tag>
+                                            <el-tag size="mini" effect="dark" v-if="scope.row.isDownload===2" type="warning">下载中..</el-tag>
+                                            <el-tag size="mini" effect="dark" v-if="scope.row.isDownload===3" type="success">下载成功</el-tag>
+                                            <el-tag size="mini" effect="dark" v-if="scope.row.isDownload===4" type="danger">下载失败</el-tag>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
                             </el-form-item>
-                        </el-col>
-                        <el-col :span="12">
-                            <el-form-item label="图片结束代码：">
-                                <el-input :readonly="loading" v-model.number="form.imgSrcEnd" placeholder="列表结束代码"></el-input>
+                        </el-collapse-item>
+                        <el-collapse-item title="第三步：" :disabled="tempImgList.length===0 || getImgListLoading">
+                            <template slot="title">
+                                <el-tag type="info" v-if="(tempImgList.length===0 || getImgListLoading) && imgList.length==0" effect="dark">
+                                    <i class="el-icon-remove"></i> 第三步
+                                </el-tag>
+                                <el-tag
+                                        type="warning"
+                                        v-if="!getImgListLoading && tempImgList.length>0 && imgList.length<tempImgList.length"
+                                        effect="dark"
+                                ><i class="el-icon-warning"></i> 第三步
+                                </el-tag>
+                                <el-tag type="success" v-if="imgList.length>=tempImgList.length && imgList.length!==0" effect="dark">
+                                    <i class="el-icon-success"></i> 第三步
+                                </el-tag>
+                            </template>
+                            <el-form-item label="保存目录：">
+                                <el-input readonly placeholder="请输入网址" v-model="defaultSaveImgPath" class="input-with-select">
+                                    <el-button
+                                            style="background:#409EFF;color:#fff;border-radius: 0 3px 3px 0;border:1px solid #409EFF;"
+                                            @click="choosePath"
+                                            slot="append"
+                                    >选择
+                                    </el-button>
+                                </el-input>
                             </el-form-item>
-                        </el-col>
-                    </el-row>
-                    <el-form-item>
-                        <el-button type="danger" :disabled="getImgListLoading" @click="getImgList(urlList)">获取图片地址</el-button>
-                        <el-button v-if="getImgListLoading" type="info" @click="cancel">取消</el-button>
-                    </el-form-item>
-                    <el-form-item label="待下载图片：">
-                        <el-table
-                                height="250"
-                                size="mini"
-                                border
-                                :data="tempImgList"
-                                v-loading="getImgListLoading"
-                                :element-loading-text="getImgListLoadingText"
-                        >
-                            <el-table-column type="index" label="#" align="center"></el-table-column>
-                            <el-table-column prop="src" label="图片地址">
-                                <template slot-scope="scope">
-                                    <el-button type="text" style="padding:0;" @click="openUrl(scope.row.src)">{{scope.row.src}}</el-button>
-                                </template>
-                            </el-table-column>
-                            <el-table-column prop="isDownload" align="center" width="85" label="状态">
-                                <template slot-scope="scope">
-                                    <el-tag size="mini" effect="dark" v-if="scope.row.isDownload===1" type="info">未下载</el-tag>
-                                    <el-tag size="mini" effect="dark" v-if="scope.row.isDownload===2" type="warning">下载中..</el-tag>
-                                    <el-tag size="mini" effect="dark" v-if="scope.row.isDownload===3" type="success">下载成功</el-tag>
-                                    <el-tag size="mini" effect="dark" v-if="scope.row.isDownload===4" type="danger">下载失败</el-tag>
-                                </template>
-                            </el-table-column>
-                        </el-table>
-                    </el-form-item>
-                </el-collapse-item>
-                <el-collapse-item title="第三步：" :disabled="tempImgList.length===0 || getImgListLoading">
-                    <template slot="title">
-                        <el-tag type="info" v-if="(tempImgList.length===0 || getImgListLoading) && imgList.length==0" effect="dark">
-                            <i class="el-icon-remove"></i> 第三步
-                        </el-tag>
-                        <el-tag
-                                type="warning"
-                                v-if="!getImgListLoading && tempImgList.length>0 && imgList.length<tempImgList.length"
-                                effect="dark"
-                        ><i class="el-icon-warning"></i> 第三步
-                        </el-tag>
-                        <el-tag type="success" v-if="imgList.length>=tempImgList.length && imgList.length!==0" effect="dark">
-                            <i class="el-icon-success"></i> 第三步
-                        </el-tag>
-                    </template>
-                    <el-form-item label="保存目录：">
-                        <el-input readonly placeholder="请输入网址" v-model="defaultSaveImgPath" class="input-with-select">
-                            <el-button
-                                    style="background:#409EFF;color:#fff;border-radius: 0 3px 3px 0;border:1px solid #409EFF;"
-                                    @click="choosePath"
-                                    slot="append"
-                            >选择
-                            </el-button>
-                        </el-input>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-button
-                                type="danger"
-                                @click="downloadPictureByList(tempImgList)"
-                                size="mini"
-                                :disabled="tempImgList.length===0 || loading===true"
-                        >下载图片
-                        </el-button>
-                        <el-button v-if="loading===true" type="info" @click="cancel">取消</el-button>
-                    </el-form-item>
-                    <el-form-item label="已下载图片：">
-                        <div style="margin-bottom:20px;">
-                        </div>
-                        <div v-if="true">
-                            <el-image
-                                    class="downloadImg"
-                                    v-for="item in imgList"
-                                    :preview-src-list="imgList"
-                                    :src="item"
-                                    fit="cover"
-                            ></el-image>
-                            <div v-if="percentage>0 && tempImgList.length" class="downloadImgPlaceholder">
-                                <el-progress
-                                        :width="80"
-                                        :color="colors"
-                                        type="circle"
-                                        :show-text="true"
-                                        :format="progressText"
-                                        :percentage="percentage"
-                                ></el-progress>
-                            </div>
-                            <div v-for="o in tempImgList.length" class="downloadImgPlaceholder" v-show="o>imgList.length+(loading?1:0)">
-                                <el-progress
-                                        :width="80"
-                                        :color="colors"
-                                        :format="progressText"
-                                        type="circle"
-                                        :show-text="true"
-                                        :percentage="0"
-                                ></el-progress>
-                            </div>
-                        </div>
-                    </el-form-item>
-                </el-collapse-item>
-            </el-collapse>
-        </el-form>
+                            <el-form-item>
+                                <el-button
+                                        type="danger"
+                                        @click="downloadPictureByList(tempImgList)"
+                                        size="mini"
+                                        :disabled="tempImgList.length===0 || loading===true"
+                                >下载图片
+                                </el-button>
+                                <el-button v-if="loading===true" type="info" @click="cancel">取消</el-button>
+                            </el-form-item>
+                            <el-form-item label="已下载图片：">
+                                <div style="margin-bottom:20px;">
+                                </div>
+                                <div v-if="true">
+                                    <el-image
+                                            class="downloadImg"
+                                            v-for="item in imgList"
+                                            :preview-src-list="imgList"
+                                            :src="item"
+                                            fit="cover"
+                                    ></el-image>
+                                    <div v-if="percentage>0 && tempImgList.length" class="downloadImgPlaceholder">
+                                        <el-progress
+                                                :width="80"
+                                                :color="colors"
+                                                type="circle"
+                                                :show-text="true"
+                                                :format="progressText"
+                                                :percentage="percentage"
+                                        ></el-progress>
+                                    </div>
+                                    <div v-for="o in tempImgList.length" class="downloadImgPlaceholder" v-show="o>imgList.length+(loading?1:0)">
+                                        <el-progress
+                                                :width="80"
+                                                :color="colors"
+                                                :format="progressText"
+                                                type="circle"
+                                                :show-text="true"
+                                                :percentage="0"
+                                        ></el-progress>
+                                    </div>
+                                </div>
+                            </el-form-item>
+                        </el-collapse-item>
+                    </el-collapse>
+                </el-form>
+            </el-col>
+        </el-row>
         <el-dialog
             title="执行任务中"
             :visible.sync="dialogVisible"
