@@ -8,13 +8,13 @@
 
 预览
 
-![screenshot](screenshot/image-1.png)
+![screenshot](./screenshot/image-1.png)
 
-![screenshot](screenshot/image-2.png)
+![screenshot](./screenshot/image-2.png)
 
-![screenshot](screenshot/image-3.png)
+![screenshot](./screenshot/image-3.png)
 
-![screenshot](screenshot/image-4.png)
+![screenshot](./screenshot/image-4.png)
 
 ## 安装
 ```
