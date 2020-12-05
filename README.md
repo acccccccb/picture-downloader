@@ -6,6 +6,11 @@
 - 下载规则可生成文件，便于分享
 - 使用nodejs + vue开发
 
+下载地址：
+> 链接: https://pan.baidu.com/s/1RREtYKlMOwXfcXKw0MowvQ
+
+> 提取码: fjk4
+
 预览
 
 ![screenshot](https://www.ihtmlcss.com/wp-content/uploads/2020/12/image-1.png)

@@ -3,9 +3,10 @@
 const config = require('./package.json');
 const electronPackager = require('electron-packager');
 let date = new Date();
+let version = config.version;
 let now = date.getFullYear().toString() + (date.getMonth()+1).toString() + date.getDate().toString() + date.getHours().toString() + date.getMinutes().toString() + date.getSeconds().toString();
 electronPackager({
-    name:config.name + '-' + now,
+    name:config.name + '-' + version + '.' + now,
     dir:'.',
     icon:'./favicon.ico',
     platform:'win32',
