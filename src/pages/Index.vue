@@ -22,7 +22,7 @@
 
 <script>
   let config = require('../../package.json');
-  import Spider from '../components/Index/Spider'
+  import Spider from './Index/Spider'
     export default {
       name: 'Index',
         components:{

@@ -264,6 +264,23 @@
                 </el-collapse-item>
             </el-collapse>
         </el-form>
+        <el-dialog
+            title="执行任务中"
+            :visible.sync="dialogVisible"
+            width="300px"
+            :fullscreen="false"
+            :close-on-click-modal="false"
+            :close-on-press-escape="false"
+            :show-close="false"
+        >
+            <div>
+                {{ dialogText }}
+                <el-progress :width="100" :percentage="parseInt(dialogPercentage)" ></el-progress>
+            </div>
+            <span slot="footer" class="dialog-footer">
+                <el-button size="mini" type="primary" @click="cancel">取消任务</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 <script>
@@ -274,6 +291,9 @@
                 loading: false,
                 loadingText: 'loading',
                 getListLoadingText: '正在获取列表...',
+                dialogVisible: false,
+                dialogText: 'loading',
+                dialogPercentage: 0,
                 defaultSaveImgPath: '',
                 isCancel: false, // 是否中止任务
                 form: {
@@ -319,11 +339,11 @@
             this.defaultSaveImgPath = localStorage.getItem('defaultSaveImgPath') ? localStorage.getItem('defaultSaveImgPath') : os.homedir() + '\\Downloads';
         },
         methods: {
-            openUrl: function (url) {
+            openUrl(url) {
                 electron.shell.openExternal(url)
             },
-            getListByUrl: function (url, callback) {
-                let _this = this;
+            getListByUrl (url, callback) {
+
                 let header = {
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
                     "Accept-Encoding": "gzip, deflate, br",
@@ -333,11 +353,11 @@
                     "referer": url,
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36"
                 };
-                _this.loading = true;
+                this.loading = true;
                 const request = new electron.remote.net.request({
                     url: url,
-                    method: _this.form.method,
-                    port: _this.form.port,
+                    method: this.form.method,
+                    port: this.form.port,
                     header: header,
                     agent: false
                 });
@@ -348,63 +368,64 @@
                 request.on('response', (response) => {
                     console.log(response.headers);
                     if (response.statusCode !== 200) {
-                        _this.loading = false;
-                        _this.$message.warning('请求错误');
+                        this.loading = false;
+                        this.$message.warning('请求错误');
                     }
                     response.on('data', (chunk) => {
                         console.log('获取data');
+                        if(this.isCancel === true) {
+                            request.destroy();
+                            return false;
+                        }
                         chunks.push(chunk);
                         size += chunk.length;
                         result.push(chunk);
-                        if (_this.timmer2) {
-                            clearTimeout(_this.timmer2);
+                        if (this.timmer2) {
+                            clearTimeout(this.timmer2);
                         }
-                        _this.timmer2 = setTimeout(function () {
-                            let listReg = new RegExp(_this.form.listStart + '([\\s\\S]*)' + _this.form.listEnd + '', 'gi');
-                            let imgReg = new RegExp(_this.form.urlStart + '.*?(?:>|\\' + _this.form.urlEnd + ')', 'gi');
+                        this.timmer2 = setTimeout(() => {
+                            let listReg = new RegExp(this.form.listStart + '([\\s\\S]*)' + this.form.listEnd + '', 'gi');
+                            let imgReg = new RegExp(this.form.urlStart + '.*?(?:>|\\' + this.form.urlEnd + ')', 'gi');
                             let srcReg = /href=[\'\"]?([^\'\"]*)[\'\"]?/i;
                             let buf = myBuffer.concat(chunks, size);
                             let checkEncoding = true;
                             try {
-                                _this.listResult = iconv.decode(buf, _this.form.encoding);
+                                this.listResult = iconv.decode(buf, this.form.encoding);
                             } catch (e) {
                                 console.warn(e);
                                 checkEncoding = false;
                             } finally {
                                 if (!checkEncoding) {
-                                    _this.$message.warning('页面编码填写错误');
+                                    this.$message.warning('页面编码填写错误');
                                     return false;
                                 }
-                                let listBody = _this.listResult.match(listReg);
-                                let arr = listBody[0].match(imgReg);
-                                if (arr && arr.length > 0) {
-                                    arr.forEach((item) => {
-                                        let src = item.match(srcReg);
-                                        if (src.length > 0 && src[1]) {
-                                            if (src[1].indexOf('https://') < 0 && src[1].indexOf('http://') < 0) {
-                                                src[1] = _this.form.imgServ + src[1];
+                                let listBody = this.listResult.match(listReg);
+                                if (listBody) {
+                                    let arr = listBody[0].match(imgReg);
+                                    if(arr && arr.length > 0) {
+                                        arr.forEach((item) => {
+                                            let src = item.match(srcReg);
+                                            if (src.length > 0 && src[1]) {
+                                                if (src[1].indexOf('https://') < 0 && src[1].indexOf('http://') < 0) {
+                                                    src[1] = this.form.imgServ + src[1];
+                                                }
+                                                this.urlList.push({
+                                                    url: src[1],
+                                                });
                                             }
-                                            _this.urlList.push({
-                                                url: src[1],
-                                            });
+                                        });
+                                        if (callback && typeof callback == 'function') {
+                                            callback(true);
                                         }
-                                    });
-                                    if (callback && typeof callback == 'function') {
-                                        callback(true);
                                     }
                                 } else {
-                                    _this.$alert('请检查过滤规则是否正确', '列表获取失败', {
-                                        confirmButtonText: '确定',
-                                        type: 'warning',
-                                        callback: action => {
-                                        }
-                                    });
+                                    this.$message.warning('部分列表获取失败，请检查过滤规则是否正确');
                                     if (callback && typeof callback == 'function') {
                                         callback(false);
                                     }
                                 }
                             }
-                        }, _this.form.timeout);
+                        }, this.form.timeout);
                     });
                     response.on('end', () => {
                         console.log(`response end`)
@@ -415,8 +436,8 @@
                 });
                 request.end();
             },
-            getList: function (callback) {
-                let _this = this;
+            getList (callback) {
+
                 let port = this.form.port;
                 this.result = '';
                 this.imgList = [];
@@ -429,10 +450,10 @@
                 }
                 if (url.indexOf('(*)') > -1) {
                     console.log('检测到通配符');
-                    let wildcardStart = _this.form.wildcardStart;
-                    let wildcardEnd = _this.form.wildcardEnd;
+                    let wildcardStart = this.form.wildcardStart;
+                    let wildcardEnd = this.form.wildcardEnd;
                     if (wildcardStart > wildcardEnd) {
-                        _this.$alert('通配符结束必须大于开始', '通配符错误', {
+                        this.$alert('通配符结束必须大于开始', '通配符错误', {
                             confirmButtonText: '确定',
                             type: 'warning',
                             callback: action => {
@@ -448,24 +469,26 @@
                             list.push(urlItem);
                         }
                         console.log(list);
-                        let loop = function (i) {
+                        let loop = (i) => {
                             console.log('循环开始', i);
-                            if (_this.isCancel === true) {
+                            if (this.isCancel === true) {
                                 return false;
                             }
                             if (i == 0) {
-                                _this.urlList = [];
+                                this.urlList = [];
                             }
-                            _this.getListByUrl(list[i], function () {
+                            this.getListByUrl(list[i],() => {
                                 if (i >= list.length - 1) {
-                                    _this.$message.success('列表获取成功' + i);
-                                    _this.loading = false;
+                                    this.$message.success('列表获取成功');
+                                    this.loading = false;
                                     if (callback && typeof callback == 'function') {
                                         callback(false);
                                     }
                                 } else {
                                     i = i + 1;
-                                    _this.getListLoadingText = `正在获取列表(${i}/${list.length})`;
+                                    this.getListLoadingText = `正在获取列表(${i}/${list.length})`;
+                                    this.dialogText = `正在获取列表(${i}/${list.length})`;
+                                    this.dialogPercentage = i / list.length * 100;
                                     loop(i);
                                 }
                             });
@@ -474,14 +497,14 @@
                     }
                 } else {
                     this.urlList = [];
-                    _this.getListByUrl(url, () => {
+                    this.getListByUrl(url, () => {
                         if (callback && typeof callback == 'function') {
                             callback(false);
                         }
                     });
                 }
             },
-            loadRuleFile: function () {
+            loadRuleFile() {
                 let loadRuleFilePath = localStorage.getItem('loadRuleFilePath') ? localStorage.getItem('loadRuleFilePath') : os.homedir() + '\\Desktop';
                 console.log(loadRuleFilePath);
                 let file = electron.remote.dialog.showOpenDialogSync({
@@ -516,17 +539,16 @@
                     this.$message.success('载入成功');
                 }
             },
-            saveRuleFile: function () {
-                let _this = this;
-                let defaultPath = localStorage.getItem('ruleSavePath') ? localStorage.getItem('ruleSavePath') : os.homedir() + '\\Desktop\\' + _this.form.ruleName + '.json';
+            saveRuleFile() {
+
+                let defaultPath = localStorage.getItem('ruleSavePath') ? localStorage.getItem('ruleSavePath') : os.homedir() + '\\Desktop\\' + this.form.ruleName + '.json';
                 let file = electron.remote.dialog.showSaveDialogSync({
                     title: '选择保存目录',
                     buttonLabel: '保存',
-                    defaultPath: defaultPath + _this.form.ruleName,
+                    defaultPath: defaultPath,
                     properties: ['openFile', 'promptToCreate'],
                     filters: [
-                        {name: 'Json', extensions: ['json']},
-                        {name: '所有文件', extensions: ['*']}
+                        {name: 'Json', extensions: ['json']}
                     ]
                 });
                 if (file) {
@@ -537,23 +559,24 @@
                     let fileName = arr[arr.length - 1];
                     let path = filePath.replace(fileName, '');
                     localStorage.setItem('ruleSavePath', path);
-                    _this.$message.success('保存成功');
+                    this.$message.success('保存成功');
                 }
             },
-            choosePath: function () {
-                let _this = this;
+            choosePath() {
+
                 let path = electron.remote.dialog.showOpenDialogSync({
                     title: '选择保存目录',
-                    defaultPath: _this.defaultSaveImgPath,
+                    defaultPath: this.defaultSaveImgPath,
                     properties: ['openDirectory']
                 });
                 if (path) {
-                    _this.defaultSaveImgPath = path[0];
+                    this.defaultSaveImgPath = path[0];
                     localStorage.setItem('defaultSaveImgPath', path[0]);
                 }
             },
-            cancel: function () {
+            cancel() {
                 this.isCancel = true;
+                this.dialogVisible = false;
                 this.$alert('任务已停止', '中止任务', {
                     confirmButtonText: '确定',
                     type: 'warning',
@@ -566,7 +589,7 @@
                     this.getImgListLoading = false;
                 }, 1000);
             },
-            saveFile: function (path, file, callback) {
+            saveFile(path, file, callback) {
                 let save = fs.writeFileSync(path, file);
                 if (!save) {
                     console.log('保存成功');
@@ -576,8 +599,8 @@
                     console.log('保存失败');
                 }
             },
-            getImg: function (src, callback) {
-                let _this = this;
+            getImg(src, callback) {
+
                 console.log('请求图片', src);
                 let header = {
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -585,7 +608,7 @@
                     "Accept-Language": "zh-CN,zh;q=0.9",
                     "Cache-Control": "no-cache",
                     "Connection": "keep-alive",
-                    "referer": _this.form.url,
+                    "referer": this.form.url,
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36"
                 };
                 let chunks = [];
@@ -599,21 +622,26 @@
                 // request.setHeader('referer',url);
                 request.on('response', (response) => {
                     if (response.statusCode !== 200) {
-                        _this.$message.warning('请求错误');
+                        this.$message.warning('请求错误');
                     }
                     let fileLength = response.headers['content-length'];
                     console.log('文件总长度：', fileLength);
                     response.on('data', (chunk) => {
+                        if(this.isCancel === true) {
+                            request.destroy();
+                            return false;
+                        }
                         size += chunk.length;
                         chunks.push(chunk);
-                        _this.percentage = (size / fileLength) * 100;
+                        this.percentage = (size / fileLength) * 100;
+                        this.dialogPercentage = (size / fileLength) * 100;
                         if (size >= fileLength) {
                             let buf = myBuffer.concat(chunks, size);
                             let imgInfo = imgSize(buf);
                             // let fileName = new Date().getTime() + '.'+imgInfo.type;
                             let fileName = src.split('/')[src.split('/').length - 1];
-                            _this.percentage = 100;
-                            _this.saveFile(_this.defaultSaveImgPath + '\\' + fileName, buf, function (res) {
+                            this.percentage = 100;
+                            this.saveFile(this.defaultSaveImgPath + '\\' + fileName, buf, (res) => {
                                 if (res) {
                                     let base64Img = 'data:image/' + imgInfo.type + ';base64,';
                                     base64Img += buf.toString('base64');
@@ -635,10 +663,7 @@
                     });
                     response.on('error', (error) => {
                         console.log(`ERROR: ${JSON.stringify(error)}`)
-                        if (_this.fullLoading) {
-                            _this.fullLoading.close();
-                        }
-                        _this.$alert('下载图片出错', '错误', {
+                        this.$alert('下载图片出错', '错误', {
                             confirmButtonText: '确定',
                             type: 'warning',
                             callback: action => {
@@ -648,31 +673,33 @@
                 });
                 request.end();
             },
-            getImgList: function (list, callback) {
+            getImgList(list, callback) {
                 console.log(list);
-                let _this = this;
-                _this.imgList = [];
-                _this.tempImgList = [];
-                _this.getImgListLoading = true;
-                _this.getImgListLoadingText = '正在获取图片地址';
-                let loop = function (i) {
-                    if (_this.isCancel === true) {
+
+                this.imgList = [];
+                this.tempImgList = [];
+                this.getImgListLoading = true;
+                this.getImgListLoadingText = '正在获取图片地址';
+                let loop = (i) => {
+                    if (this.isCancel === true) {
                         return false;
                     }
-                    _this.getUrl(list[i].url, function () {
+                    this.getUrl(list[i].url, () => {
                         if (i < list.length - 1) {
-                            _this.getImgListLoadingText = `正在获取图片地址(${i + 1}/${list.length})`;
+                            this.getImgListLoadingText = `正在获取图片地址(${i + 1}/${list.length})`;
+                            this.dialogText = `正在获取图片地址(${i + 1}/${list.length})`;
+                            this.dialogPercentage = i / list.length * 100;
                             i++;
                             loop(i);
                         } else {
-                            _this.getImgListLoading = false;
-                            if (_this.tempImgList.length > 0) {
-                                _this.$message.success('图片地址获取完成，等待下载');
+                            this.getImgListLoading = false;
+                            if (this.tempImgList.length > 0) {
+                                this.$message.success('图片地址获取完成，等待下载');
                                 if (callback && typeof callback == 'function') {
                                     callback(true);
                                 }
                             } else {
-                                _this.$alert('没有获取到图片地址，请检查规则是否有误', '操作异常', {
+                                this.$alert('没有获取到图片地址，请检查规则是否有误', '操作异常', {
                                     confirmButtonText: '确定',
                                     type: 'warning',
                                     callback: action => {
@@ -687,8 +714,8 @@
                 };
                 loop(0);
             },
-            getUrl: function (listUrl, callback) {
-                let _this = this;
+            getUrl(listUrl, callback) {
+
                 let port = this.form.port;
                 let url = port !== 80 ? (listUrl + ':' + port) : listUrl;
                 if (url.indexOf('https://') < 0 && url.indexOf('http://') < 0) {
@@ -703,11 +730,11 @@
                     "referer": url,
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36"
                 };
-                _this.loading = true;
+                this.loading = true;
                 const request = new electron.remote.net.request({
                     url: url,
-                    method: _this.form.method,
-                    port: _this.form.port,
+                    method: this.form.method,
+                    port: this.form.port,
                     header: header,
                     agent: false
                 });
@@ -718,45 +745,49 @@
                 request.on('response', (response) => {
                     console.log(response);
                     if (response.statusCode !== 200) {
-                        _this.$message.warning('请求错误');
-                        _this.getImgListLoading = false;
+                        this.$message.warning('请求错误');
+                        this.getImgListLoading = false;
                     }
                     response.on('data', (chunk) => {
                         console.log('获取data');
+                        if(this.isCancel === true) {
+                            request.destroy();
+                            return false;
+                        }
                         chunks.push(chunk);
                         size += chunk.length;
                         result.push(chunk);
-                        if (_this.timmer2) {
-                            clearTimeout(_this.timmer2);
+                        if (this.timmer2) {
+                            clearTimeout(this.timmer2);
                         }
-                        _this.timmer2 = setTimeout(function () {
+                        this.timmer2 = setTimeout(() => {
                             let imgReg = /<img.*?(?:>|\/>)/gi;
                             // let srcReg = /src=\"?([^"]*)\"\salt=\"Wallpaper\"?/i; // imgSrcStart //imgSrcEnd
-                            let srcReg = new RegExp(_this.form.imgSrcStart + '?([^"]*)\\"' + _this.form.imgSrcEnd + '?', 'i');
+                            let srcReg = new RegExp(this.form.imgSrcStart + '?([^"]*)\\"' + this.form.imgSrcEnd + '?', 'i');
                             console.log(srcReg);
                             let buf = myBuffer.concat(chunks, size);
                             let checkEncoding = true;
                             try {
-                                _this.imgSrcResult = iconv.decode(buf, _this.form.encoding);
+                                this.imgSrcResult = iconv.decode(buf, this.form.encoding);
                             } catch (e) {
                                 console.warn(e);
                                 checkEncoding = false;
                             } finally {
                                 if (!checkEncoding) {
-                                    _this.$message.warning('页面编码填写错误');
-                                    clearTimeout(_this.timmer2);
+                                    this.$message.warning('页面编码填写错误');
+                                    clearTimeout(this.timmer2);
                                     return false;
                                 }
                                 if (srcReg) {
-                                    let arr = _this.imgSrcResult.match(imgReg);
+                                    let arr = this.imgSrcResult.match(imgReg);
                                     if (arr) {
                                         arr.forEach((item) => {
                                             let src = item.match(srcReg);
                                             if (src && src.length > 0 && src[1]) {
                                                 if (src[1].indexOf('https://') < 0 && src[1].indexOf('http://') < 0) {
-                                                    src[1] = _this.form.imgServ + src[1];
+                                                    src[1] = this.form.imgServ + src[1];
                                                 }
-                                                _this.tempImgList.push({
+                                                this.tempImgList.push({
                                                     src: src[1],
                                                     isDownload: 1,
                                                 });
@@ -767,9 +798,9 @@
                                         }
                                     }
                                 }
-                                _this.loading = false;
+                                this.loading = false;
                             }
-                        }, _this.form.timeout);
+                        }, this.form.timeout);
                     });
                     response.on('error', (error) => {
                         console.log(`ERROR: ${JSON.stringify(error)}`)
@@ -777,30 +808,30 @@
                 });
                 request.end();
             },
-            downloadPictureByList: function (list, callback) {
-                let _this = this;
-                _this.loading = true;
+            downloadPictureByList(list, callback) {
+
+                this.loading = true;
                 console.log(list.length + '张图片');
-                let loop = function (i) {
-                    if(_this.isCancel === true) {
+                let loop = (i) => {
+                    if(this.isCancel === true) {
                         return false;
                     }
                     let src = list[i].src;
-                    console.log('正在获取第' + i + '张图片:');
-                    _this.tempImgList[i].isDownload = 2;
-                    _this.getImg(src, function (res) {
-                        _this.imgList.push(res);
-                        _this.tempImgList[i].isDownload = 3;
+                    this.dialogText = `正在获取第${i}张图片(${i}/${list.length})`;
+                    this.tempImgList[i].isDownload = 2;
+                    this.getImg(src, (res) => {
+                        this.imgList.push(res);
+                        this.tempImgList[i].isDownload = 3;
                         if (i < list.length - 1) {
                             let n = i + 1;
                             loop(n);
                         } else {
-                            _this.loading = false;
-                            _this.percentage = 0;
+                            this.loading = false;
+                            this.percentage = 0;
                             if (callback && typeof callback == 'function') {
                                 callback(true);
                             }
-                            _this.$alert('图片下载完成', '下载完成', {
+                            this.$alert('图片下载完成', '下载完成', {
                                 confirmButtonText: '确定',
                                 type: 'success',
                                 callback: action => {
@@ -811,7 +842,7 @@
                 };
                 loop(0);
             },
-            progressText: function (percentage) {
+            progressText(percentage) {
                 if (percentage == 0) {
                     return '等待下载'
                 }
@@ -822,60 +853,21 @@
                     return '已完成'
                 }
             },
-            runRuleFile: function () {
-                let _this = this;
+            runRuleFile() {
+
                 this.$confirm('将自动执行当前规则，请确定规则无误', '提示', {
                     type: 'warning',
                     confirmButtonText: '执行',
                     cancelButtonText: '取消',
                 }).then(() => {
-                    // _this.fullLoading = this.$loading({
-                    //     lock: true,
-                    //     text: '正在获取列表',
-                    //     spinner: 'el-icon-loading',
-                    //     background: 'rgba(0, 0, 0, 0.7)'
-                    // });
-                    _this.$alert('正在获取列表', '执行任务', {
-                        confirmButtonText: '取消',
-                        type: 'warning',
-                        callback: action => {
-                            _this.cancel();
-                        }
-                    });
-                    _this.getList(() => {
-                        _this.$alert('正在获取图片地址', '执行任务', {
-                            confirmButtonText: '取消',
-                            type: 'warning',
-                            callback: action => {
-                                _this.cancel();
-                            }
-                        });
-                        // _this.fullLoading.close();
-                        // _this.fullLoading = this.$loading({
-                        //     lock: true,
-                        //     text: '正在获取图片地址',
-                        //     spinner: 'el-icon-loading',
-                        //     background: 'rgba(0, 0, 0, 0.7)'
-                        // });
-                        _this.getImgList(_this.urlList, () => {
-                            // _this.fullLoading.close();
-                            // _this.fullLoading = this.$loading({
-                            //     lock: true,
-                            //     text: '正在下载图片',
-                            //     spinner: 'el-icon-loading',
-                            //     background: 'rgba(0, 0, 0, 0.7)'
-                            // });
-                            _this.$alert('正在下载图片', '执行任务', {
-                                confirmButtonText: '取消',
-                                type: 'warning',
-                                callback: action => {
-                                    _this.cancel();
-                                }
-                            });
-                            _this.downloadPictureByList(_this.tempImgList, () => {
-                                // _this.fullLoading.close();
-                                // _this.fullLoading = null;
-                                _this.$alert('已完成下载任务', '任务结束', {
+                    this.dialogVisible = true;
+                    this.dialogPercentage = 0;
+                    this.dialogText = 'Starting...';
+                    this.getList(() => {
+                        this.getImgList(this.urlList, () => {
+                            this.downloadPictureByList(this.tempImgList, () => {
+                                this.dialogVisible = false;
+                                this.$alert('已完成下载任务', '任务结束', {
                                     confirmButtonText: '确定',
                                     type: 'warning',
                                     callback: action => {
